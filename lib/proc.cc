@@ -691,7 +691,7 @@ void Proc::netstat_stats() noexcept {
 }
 
 void Proc::arp_stats() noexcept {
-  static auto arpcache_size = registry_->GetGauge("net.arpCacheSize");
+  static auto arpcache_size = registry_->gauge(registry_->CreateId("net.arpCacheSize", kEmptyTags));
   auto fp = open_file(path_prefix_, "net/arp");
   if (fp == nullptr) {
     return;
@@ -706,7 +706,7 @@ void Proc::arp_stats() noexcept {
       num_entries++;
     }
   }
-  arpcache_size->Set(num_entries);
+  arpcache_size->Update(num_entries);
 }
 
 }  // namespace atlasagent

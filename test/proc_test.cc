@@ -202,12 +202,15 @@ TEST(Proc, ParseNetstat) {
 }
 
 TEST(Proc, ArpStats) {
-  Registry registry(Config{});
+  ManualClock clock;
+  TestRegistry registry(&clock);
+  registry.SetWall(1000);
   Proc proc{&registry, "./resources/proc"};
   proc.arp_stats();
-  const auto ms = registry.Measurements();
+  const auto ms = registry.my_measurements();
   EXPECT_EQ(ms.size(), 1);
   const auto& m = ms.front();
-  EXPECT_EQ(m.id->Name(), "net.arpCacheSize");
+  std::string name = m.id->Name();
+  EXPECT_EQ(name, "net.arpCacheSize");
   EXPECT_DOUBLE_EQ(m.value, 6);
 }
