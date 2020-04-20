@@ -58,7 +58,7 @@ static void gather_titus_metrics(CGroup* cGroup, Proc* proc, Disk* disk, Aws* aw
 #else
 static void gather_peak_system_metrics(Proc* proc) { proc->peak_cpu_stats(); }
 
-static void gather_slow_system_metrics(Proc* proc, Disk* disk, Ntp<>* ntp, Aws* aws) {
+static void gather_slow_system_metrics(Proc* proc, Disk* disk, Ntp<>* ntp) {
   Logger()->info("Gathering system metrics");
   proc->cpu_stats();
   proc->network_stats();
@@ -71,7 +71,6 @@ static void gather_slow_system_metrics(Proc* proc, Disk* disk, Ntp<>* ntp, Aws* 
   proc->process_stats();
   disk->disk_stats();
   ntp->update_stats();
-  aws->update_stats();
 }
 #endif
 
@@ -168,7 +167,6 @@ void collect_system_metrics(spectator::Registry* registry, std::unique_ptr<Nvml>
   Proc proc{registry, std::move(net_tags)};
   Disk disk{registry, ""};
   Ntp<> ntp{registry};
-  Aws aws{registry};
 
   auto gpu = init_gpu(registry, std::move(nvidia_lib));
 
@@ -177,11 +175,11 @@ void collect_system_metrics(spectator::Registry* registry, std::unique_ptr<Nvml>
   auto next_slow_run = now + seconds(60);
   auto next_run = now;
   std::chrono::nanoseconds time_to_sleep;
-  gather_slow_system_metrics(&proc, &disk, &ntp, &aws);
+  gather_slow_system_metrics(&proc, &disk, &ntp);
   do {
     gather_peak_system_metrics(&proc);
     if (system_clock::now() >= next_slow_run) {
-      gather_slow_system_metrics(&proc, &disk, &ntp, &aws);
+      gather_slow_system_metrics(&proc, &disk, &ntp);
       perf_metrics.collect();
       next_slow_run += seconds(60);
       if (gpu) {
